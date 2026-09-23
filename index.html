@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akhila Akkem — Player Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --panel:#121729;
+    --panel-2:#171d33;
+    --border:#262e4a;
+    --violet:#7c6cf5;
+    --teal:#1fd9c4;
+    --gold:#f5b942;
+    --text:#e9ecf6;
+    --muted:#8891ab;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    overflow-x:hidden;
+    line-height:1.6;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--violet);color:#fff;}
+
+  #bg-canvas{
+    position:fixed; inset:0; z-index:0; opacity:.55;
+  }
+
+  .noise{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background-image:radial-gradient(circle at 20% 20%, rgba(124,108,245,.10), transparent 40%),
+                      radial-gradient(circle at 80% 70%, rgba(31,217,196,.08), transparent 45%);
+  }
+
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:18px 6vw;
+    background:rgba(10,14,26,.65);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  .logo{font-weight:700; font-size:1.1rem; letter-spacing:.5px;}
+  .logo span{color:var(--teal);}
+  .navlinks{display:flex; gap:28px; font-size:.92rem; color:var(--muted);}
+  .navlinks a:hover{color:var(--text);}
+  .hp{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);}
+  .hp-bar{width:70px;height:6px;border-radius:3px;background:var(--border);overflow:hidden;}
+  .hp-fill{height:100%;width:78%;background:linear-gradient(90deg,var(--teal),var(--violet));}
+
+  section{position:relative; z-index:2; padding:120px 6vw 80px;}
+
+  /* HERO */
+  .hero{
+    min-height:100vh; display:flex; flex-direction:column; justify-content:center;
+    padding-top:80px;
+  }
+  .tag{color:var(--teal); font-size:.85rem; letter-spacing:.3px; margin-bottom:18px; font-family:'Space Grotesk',sans-serif;}
+  .hero h1{font-size:clamp(2.6rem,7vw,5.2rem); line-height:1.02; font-weight:700; max-width:14ch;}
+  .hero h1 .accent{color:var(--violet);}
+  .hero p{max-width:52ch; color:var(--muted); font-size:1.08rem; margin-top:22px;}
+  .cta-row{display:flex; gap:16px; margin-top:36px; flex-wrap:wrap;}
+  .btn{
+    padding:13px 26px; border-radius:8px; font-weight:600; font-size:.95rem;
+    border:1px solid var(--border); cursor:pointer; transition:transform .15s ease, border-color .15s ease;
+    font-family:'Inter',sans-serif;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn-primary{background:linear-gradient(135deg,var(--violet),#5a4bd6); border:none; color:#fff;}
+  .btn-ghost{background:transparent; color:var(--text);}
+  .btn-ghost:hover{border-color:var(--teal);}
+
+  .stat-strip{display:flex; gap:36px; margin-top:56px; flex-wrap:wrap;}
+  .stat-strip div{border-left:2px solid var(--border); padding-left:14px;}
+  .stat-num{font-family:'Space Grotesk',sans-serif; font-size:1.6rem; font-weight:700;}
+  .stat-label{color:var(--muted); font-size:.8rem;}
+
+  /* SECTION HEADS */
+  .sec-head{margin-bottom:48px;}
+  .sec-num{color:var(--teal); font-family:'Space Grotesk',sans-serif; font-size:.9rem;}
+  .sec-head h2{font-size:clamp(1.8rem,4vw,2.6rem); margin-top:6px;}
+
+  /* ABOUT */
+  .about-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:60px; align-items:start;}
+  .about-grid p{color:var(--muted); margin-bottom:16px; max-width:60ch;}
+  .quest-log{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:26px;}
+  .quest-log h3{font-size:1rem; margin-bottom:16px; color:var(--gold);}
+  .quest{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); font-size:.92rem;}
+  .quest:last-child{border-bottom:none;}
+  .quest-dot{width:9px;height:9px;border-radius:50%;background:var(--teal);margin-top:6px;flex-shrink:0;}
+  .quest b{display:block;}
+  .quest span{color:var(--muted); font-size:.85rem;}
+
+  /* SKILLS */
+  .skills-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px;}
+  .skill-card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:22px;}
+  .skill-card h3{font-size:1rem; margin-bottom:16px; display:flex; align-items:center; gap:10px;}
+  .skill-card h3::before{content:''; width:8px; height:8px; background:var(--violet); border-radius:2px; display:inline-block;}
+  .bar-row{margin-bottom:12px;}
+  .bar-row:last-child{margin-bottom:0;}
+  .bar-top{display:flex; justify-content:space-between; font-size:.82rem; color:var(--muted); margin-bottom:5px;}
+  .bar-track{height:7px; background:var(--border); border-radius:4px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:4px; background:linear-gradient(90deg,var(--teal),var(--violet)); width:0%; transition:width 1.2s ease;}
+
+  /* PROJECTS */
+  .missions{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px;}
+  .mission{
+    background:linear-gradient(160deg,var(--panel-2),var(--panel));
+    border:1px solid var(--border); border-radius:16px; padding:26px;
+    display:flex; flex-direction:column; gap:14px;
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .mission:hover{border-color:var(--teal); transform:translateY(-4px);}
+  .mission-top{display:flex; justify-content:space-between; align-items:flex-start;}
+  .diff{font-size:.72rem; padding:4px 10px; border-radius:20px; font-weight:600; letter-spacing:.2px;}
+  .diff.easy{background:rgba(31,217,196,.15); color:var(--teal);}
+  .diff.mid{background:rgba(245,185,66,.15); color:var(--gold);}
+  .diff.hard{background:rgba(124,108,245,.18); color:var(--violet);}
+  .mission h3{font-size:1.15rem;}
+  .mission p{color:var(--muted); font-size:.92rem; flex-grow:1;}
+  .tech-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .tech{font-size:.75rem; background:var(--bg); border:1px solid var(--border); padding:4px 10px; border-radius:6px; color:var(--muted);}
+  .mission-link{font-size:.85rem; color:var(--teal); font-weight:600; margin-top:6px;}
+
+  /* CONTACT */
+  .contact-panel{
+    background:linear-gradient(135deg,var(--panel-2),var(--panel));
+    border:1px solid var(--border); border-radius:20px;
+    padding:60px 6vw; text-align:center;
+  }
+  .contact-panel h2{font-size:clamp(1.8rem,4vw,2.6rem); margin-bottom:16px;}
+  .contact-panel p{color:var(--muted); max-width:50ch; margin:0 auto 30px;}
+  .contact-links{display:flex; justify-content:center; gap:18px; flex-wrap:wrap;}
+  .contact-links a{
+    padding:12px 22px; border:1px solid var(--border); border-radius:9px; font-size:.9rem; font-weight:600;
+    transition:border-color .15s ease, transform .15s ease; display:inline-block;
+  }
+  .contact-links a:hover{border-color:var(--teal); transform:translateY(-2px);}
+
+  footer{text-align:center; padding:34px 6vw; color:var(--muted); font-size:.82rem; position:relative; z-index:2;}
+
+  @media (max-width:820px){
+    .about-grid{grid-template-columns:1fr;}
+    .navlinks{display:none;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .bar-fill{transition:none;}
+  }
+
+  :focus-visible{outline:2px solid var(--teal); outline-offset:3px;}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="noise"></div>
+
+<nav>
+  <div class="logo">AKHILA<span>.DEV</span></div>
+  <div class="navlinks">
+    <a href="#about">About</a>
+    <a href="#skills">Skills</a>
+    <a href="#projects">Projects</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <div class="hp">
+    <span>XP</span>
+    <div class="hp-bar"><div class="hp-fill"></div></div>
+  </div>
+</nav>
+
+<section class="hero" id="home">
+  <div class="tag">PLAYER PROFILE // LEVEL 02 · CSE BRANCH</div>
+  <h1>Akkem Akhila builds <span class="accent">apps &amp; websites</span> that feel alive.</h1>
+  <p>2nd-year Computer Science &amp; Engineering student, app developer and web developer. I turn ideas into working products — one build, one bug fix, one level at a time.</p>
+  <div class="cta-row">
+    <a href="#projects" class="btn btn-primary">View missions</a>
+    <a href="#contact" class="btn btn-ghost">Get in touch</a>
+  </div>
+  <div class="stat-strip">
+    <div><div class="stat-num">2nd Yr</div><div class="stat-label">B.Tech CSE</div></div>
+    <div><div class="stat-num">2</div><div class="stat-label">Disciplines — Web + App</div></div>
+    <div><div class="stat-num">Lvl 02</div><div class="stat-label">Current progress</div></div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="sec-head"><div class="sec-num">01 / CHARACTER</div><h2>About this player</h2></div>
+  <div class="about-grid">
+    <div>
+      <p>I'm Akhila — a Computer Science &amp; Engineering student currently in my 2nd year, spending most of my time between two worlds: building apps and building for the web. I like the moment a build finally runs without errors, and the process of getting there just as much.</p>
+      <p>Right now I'm stacking skills in both frontend and app development, picking up new tools each semester and shipping small projects to practice them. Long-term, I'm aiming to grow into a developer who can take a product from idea to a polished, working release.</p>
+    </div>
+    <div class="quest-log">
+      <h3>QUEST LOG</h3>
+      <div class="quest"><div class="quest-dot"></div><div><b>B.Tech, Computer Science &amp; Engineering</b><span>Currently in Year 2</span></div></div>
+      <div class="quest"><div class="quest-dot"></div><div><b>Web Development</b><span>Building responsive, interactive sites</span></div></div>
+      <div class="quest"><div class="quest-dot"></div><div><b>App Development</b><span>Designing and building mobile apps</span></div></div>
+      <div class="quest"><div class="quest-dot"></div><div><b>Next milestone</b><span>Ship a full-stack project end to end</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="skills">
+  <div class="sec-head"><div class="sec-num">02 / SKILL TREE</div><h2>Abilities unlocked</h2></div>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <h3>Frontend</h3>
+      <div class="bar-row"><div class="bar-top"><span>HTML &amp; CSS</span><span>85%</span></div><div class="bar-track"><div class="bar-fill" data-w="85"></div></div></div>
+      <div class="bar-row"><div class="bar-top"><span>JavaScript</span><span>75%</span></div><div class="bar-track"><div class="bar-fill" data-w="75"></div></div></div>
+      <div class="bar-row"><div class="bar-top"><span>Responsive Design</span><span>80%</span></div><div class="bar-track"><div class="bar-fill" data-w="80"></div></div></div>
+    </div>
+    <div class="skill-card">
+      <h3>App Development</h3>
+      <div class="bar-row"><div class="bar-top"><span>UI/UX for Apps</span><span>78%</span></div><div class="bar-track"><div class="bar-fill" data-w="78"></div></div></div>
+      <div class="bar-row"><div class="bar-top"><span>App Logic &amp; Flow</span><span>72%</span></div><div class="bar-track"><div class="bar-fill" data-w="72"></div></div></div>
+      <div class="bar-row"><div class="bar-top"><span>Testing &amp; Debugging</span><span>68%</span></div><div class="bar-track"><div class="bar-fill" data-w="68"></div></div></div>
+    </div>
+    <div class="skill-card">
+      <h3>Core CS</h3>
+      <div class="bar-row"><div class="bar-top"><span>Data Structures</span><span>70%</span></div><div class="bar-track"><div class="bar-fill" data-w="70"></div></div></div>
+      <div class="bar-row"><div class="bar-top"><span>Problem Solving</span><span>76%</span></div><div class="bar-track"><div class="bar-fill" data-w="76"></div></div></div>
+      <div class="bar-row"><div class="bar-top"><span>Git &amp; Version Control</span><span>65%</span></div><div class="bar-track"><div class="bar-fill" data-w="65"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="projects">
+  <div class="sec-head"><div class="sec-num">03 / MISSIONS</div><h2>Projects completed</h2></div>
+  <div class="missions">
+    <div class="mission">
+      <div class="mission-top"><h3>Campus Connect App</h3><span class="diff mid">MID</span></div>
+      <p>A mobile app concept for students to track class schedules, assignments and campus events in one place, with reminders for deadlines.</p>
+      <div class="tech-row"><span class="tech">App Design</span><span class="tech">UI/UX</span><span class="tech">Java</span></div>
+      <div class="mission-link">Edit this with your own project details →</div>
+    </div>
+    <div class="mission">
+      <div class="mission-top"><h3>Portfolio Website</h3><span class="diff easy">EASY</span></div>
+      <p>This very site — a single-file, game-inspired portfolio built with HTML, CSS and a lightweight 3D background, designed to be dropped straight onto GitHub Pages.</p>
+      <div class="tech-row"><span class="tech">HTML</span><span class="tech">CSS</span><span class="tech">Three.js</span></div>
+      <div class="mission-link">Live on GitHub Pages →</div>
+    </div>
+    <div class="mission">
+      <div class="mission-top"><h3>Task Tracker Web App</h3><span class="diff mid">MID</span></div>
+      <p>A to-do and productivity web app with categories, priority levels and progress tracking, built to practice JavaScript logic and local data handling.</p>
+      <div class="tech-row"><span class="tech">JavaScript</span><span class="tech">CSS</span><span class="tech">LocalStorage</span></div>
+      <div class="mission-link">Edit this with your own project details →</div>
+    </div>
+    <div class="mission">
+      <div class="mission-top"><h3>DSA Practice Log</h3><span class="diff hard">HARD</span></div>
+      <p>A running log of data structures &amp; algorithms problems solved, with notes on approach and complexity — part of ongoing core CS practice.</p>
+      <div class="tech-row"><span class="tech">C++ / Java</span><span class="tech">Algorithms</span></div>
+      <div class="mission-link">Edit this with your own project details →</div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="contact-panel">
+    <h2>Ready to team up?</h2>
+    <p>Open to internships, collaborations and projects where I can build and learn. Send a message and I'll respond as soon as I respawn.</p>
+    <div class="contact-links">
+      <a href="mailto:youremail@example.com">Email me</a>
+      <a href="https://github.com/yourusername" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+<footer>© 2026 Akkem Akhila — Built with HTML, CSS &amp; a little bit of game logic.</footer>
+
+<script>
+// ---- Three.js floating particle / wireframe background ----
+(function(){
+  if (typeof THREE === 'undefined') return;
+  var canvas = document.getElementById('bg-canvas');
+  var renderer = new THREE.WebGLRenderer({canvas: canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.z = 30;
+
+  // Wireframe icosahedron "core"
+  var geo = new THREE.IcosahedronGeometry(9, 1);
+  var mat = new THREE.MeshBasicMaterial({color:0x7c6cf5, wireframe:true, transparent:true, opacity:0.35});
+  var core = new THREE.Mesh(geo, mat);
+  scene.add(core);
+
+  var geo2 = new THREE.IcosahedronGeometry(9.6, 1);
+  var mat2 = new THREE.MeshBasicMaterial({color:0x1fd9c4, wireframe:true, transparent:true, opacity:0.15});
+  var core2 = new THREE.Mesh(geo2, mat2);
+  scene.add(core2);
+
+  // Particle field
+  var particleCount = window.innerWidth < 700 ? 250 : 550;
+  var positions = new Float32Array(particleCount*3);
+  for(var i=0;i<particleCount;i++){
+    positions[i*3] = (Math.random()-0.5)*140;
+    positions[i*3+1] = (Math.random()-0.5)*140;
+    positions[i*3+2] = (Math.random()-0.5)*140;
+  }
+  var pgeo = new THREE.BufferGeometry();
+  pgeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  var pmat = new THREE.PointsMaterial({color:0xe9ecf6, size:0.5, transparent:true, opacity:0.5});
+  var points = new THREE.Points(pgeo, pmat);
+  scene.add(points);
+
+  var mouseX = 0, mouseY = 0;
+  window.addEventListener('mousemove', function(e){
+    mouseX = (e.clientX/window.innerWidth - 0.5);
+    mouseY = (e.clientY/window.innerHeight - 0.5);
+  });
+
+  window.addEventListener('resize', function(){
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    core.rotation.x += 0.0015;
+    core.rotation.y += 0.0022;
+    core2.rotation.x -= 0.001;
+    core2.rotation.y -= 0.0016;
+    points.rotation.y += 0.0004;
+    camera.position.x += (mouseX*6 - camera.position.x) * 0.02;
+    camera.position.y += (-mouseY*6 - camera.position.y) * 0.02;
+    camera.lookAt(scene.position);
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+// ---- Animate skill bars on scroll ----
+var bars = document.querySelectorAll('.bar-fill');
+var observer = new IntersectionObserver(function(entries){
+  entries.forEach(function(entry){
+    if(entry.isIntersecting){
+      entry.target.style.width = entry.target.dataset.w + '%';
+      observer.unobserve(entry.target);
+    }
+  });
+},{threshold:0.3});
+bars.forEach(function(b){ observer.observe(b); });
+</script>
+</body>
+</html>
